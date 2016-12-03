@@ -7,6 +7,6 @@ Due to some limitations in the TFS2015 environment not all agent build tasks are
 Further objective is to build and package these ported build tasks as easy to install visx extensions for TFS and distribute on the tfs marketplace.
 
 ### Identified useful agent tasks absent from TFS 2015 release
-* Copy Files over SSH (SCP)
+* CopyFilesOverSSH
+* FTPUpload
 * SSH
-* FTP
