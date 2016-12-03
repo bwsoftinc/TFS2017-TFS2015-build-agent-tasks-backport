@@ -50,11 +50,8 @@ var validateTask = util.validateTask;
 
 // global paths
 var buildPath = path.join(__dirname, '_build', 'Tasks');
-var buildTestsPath = path.join(__dirname, '_build', 'Tests');
 var commonPath = path.join(__dirname, '_build', 'Tasks', 'Common');
 var packagePath = path.join(__dirname, '_package');
-var testTasksPath = path.join(__dirname, '_test', 'Tasks');
-var testPath = path.join(__dirname, '_test', 'Tests');
 
 // node min version
 var minNodeVer = '4.0.0';
@@ -229,120 +226,6 @@ target.build = function() {
     });
 
     banner('Build successful', true);
-}
-
-//
-// will run tests for the scope of tasks being built
-// npm test
-// node make.js test
-// node make.js test --task ShellScript --suite L0
-//
-target.test = function() {
-    ensureTool('tsc', '--version', 'Version 1.8.7');
-    ensureTool('mocha', '--version', '2.3.3');
-
-    // build/copy the ps test infra
-    rm('-Rf', buildTestsPath);
-    mkdir('-p', path.join(buildTestsPath, 'lib'));
-    var runnerSource = path.join(__dirname, 'Tests', 'lib', 'psRunner.ts');
-    run(`tsc ${runnerSource} --outDir ${path.join(buildTestsPath, 'lib')}`);
-    console.log();
-    console.log('> copying ps test lib resources');
-    matchCopy('+(*.ps1|*.psm1)', path.join(__dirname, 'Tests', 'lib'), path.join(buildTestsPath, 'lib'));
-
-    // run the tests
-    var suiteType = options.suite || 'L0';
-    var taskType = options.task || '*';
-    var pattern1 = buildPath + '/' + taskType + '/Tests/' + suiteType + '.js';
-    var pattern2 = buildPath + '/Common/' + taskType + '/Tests/' + suiteType + '.js';
-    var testsSpec = matchFind(pattern1, buildPath)
-        .concat(matchFind(pattern2, buildPath));
-    if (!testsSpec.length) {
-        fail(`Unable to find tests using the following patterns: ${JSON.stringify([pattern1, pattern2])}`);
-    }
-
-    run('mocha ' + testsSpec.join(' '), /*inheritStreams:*/true);
-}
-
-//
-// node make.js testLegacy
-// node make.js testLegacy --suite L0/XCode
-//
-
-target.testLegacy = function() {
-    ensureTool('tsc', '--version', 'Version 1.8.7');
-    ensureTool('mocha', '--version', '2.3.3');
-
-    // clean
-    console.log('removing _test');
-    rm('-Rf', path.join(__dirname, '_test'));
-
-    // copy the tasks to the test dir
-    console.log();
-    console.log('> copying tasks');
-    mkdir('-p', testTasksPath);
-    cp('-R', path.join(buildPath, '*'), testTasksPath);
-
-    // compile L0 and lib
-    var testSource = path.join(__dirname, 'Tests');
-    cd(testSource);
-    run('tsc --outDir ' + testPath + ' --rootDir ' + testSource);
-
-    // copy L0 test resources
-    console.log();
-    console.log('> copying L0 resources');
-    matchCopy('+(data|*.ps1|*.json)', path.join(__dirname, 'Tests', 'L0'), path.join(testPath, 'L0'), { dot: true });
-
-    // copy test lib resources (contains ps scripts, etc)
-    console.log();
-    console.log('> copying lib resources');
-    matchCopy('+(*.ps1|*.psm1|package.json)', path.join(__dirname, 'Tests', 'lib'), path.join(testPath, 'lib'));
-
-    // create a test temp dir - used by the task runner to copy each task to an isolated dir
-    var tempDir = path.join(testPath, 'Temp');
-    process.env['TASK_TEST_TEMP'] = tempDir;
-    mkdir('-p', tempDir);
-
-    // suite path
-    var suitePath = path.join(testPath, options.suite || 'L0/**', '_suite.js');
-    suitePath = path.normalize(suitePath);
-    var testsSpec = matchFind(suitePath, path.join(testPath, 'L0'));
-    if (!testsSpec.length) {
-        fail(`Unable to find tests using the following pattern: ${suitePath}`);
-    }
-
-    // mocha doesn't always return a non-zero exit code on test failure. when only
-    // a single suite fails during a run that contains multiple suites, mocha does
-    // not appear to always return non-zero. as a workaround, the following code
-    // creates a wrapper suite with an "after" hook. in the after hook, the state
-    // of the runnable context is analyzed to determine whether any tests failed.
-    // if any tests failed, log a ##vso command to fail the build.
-    var testsSpecPath = ''
-    var testsSpecPath = path.join(testPath, 'testsSpec.js');
-    var contents = 'var __suite_to_run;' + os.EOL;
-    contents += 'describe(\'Legacy L0\', function (__outer_done) {' + os.EOL;
-    contents += '    after(function (done) {' + os.EOL;
-    contents += '        var failedCount = 0;' + os.EOL;
-    contents += '        var suites = [ this._runnable.parent ];' + os.EOL;
-    contents += '        while (suites.length) {' + os.EOL;
-    contents += '            var s = suites.pop();' + os.EOL;
-    contents += '            suites = suites.concat(s.suites); // push nested suites' + os.EOL;
-    contents += '            failedCount += s.tests.filter(function (test) { return test.state != "passed" }).length;' + os.EOL;
-    contents += '        }' + os.EOL;
-    contents += '' + os.EOL;
-    contents += '        if (failedCount && process.env.TF_BUILD) {' + os.EOL;
-    contents += '            console.log("##vso[task.logissue type=error]" + failedCount + " test(s) failed");' + os.EOL;
-    contents += '            console.log("##vso[task.complete result=Failed]" + failedCount + " test(s) failed");' + os.EOL;
-    contents += '        }' + os.EOL;
-    contents += '' + os.EOL;
-    contents += '        done();' + os.EOL;
-    contents += '    });' + os.EOL;
-    testsSpec.forEach(function (itemPath) {
-        contents += `    __suite_to_run = require(${JSON.stringify(itemPath)});` + os.EOL;
-    });
-    contents += '});' + os.EOL;
-    fs.writeFileSync(testsSpecPath, contents);
-    run('mocha ' + testsSpecPath, /*inheritStreams:*/true);
 }
 
 target.package = function() {
