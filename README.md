@@ -12,7 +12,7 @@ Further objective is to build and package these ported build agent tasks as easy
 * SSH
 
 ### Building
-* install [Node.js](http://nodejs.org)
-* open command window and navigate to local repo
-* run `npm install`
-* run `node make.js build`
+* Install [Node.js](http://nodejs.org)
+* Open command window and navigate to local repo
+* Run `npm install`
+* Run `node make.js build`
