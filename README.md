@@ -7,12 +7,23 @@ Due to some limitations in the TFS2015 environment not all agent build tasks are
 Further objective is to build and package these ported build agent tasks as easy to install visx extensions for TFS and distribute on the tfs marketplace.
 
 ## Identified useful agent tasks absent from TFS 2015 release
+
 * CopyFilesOverSSH
 * FTPUpload
 * SSH
 
-### Building
+## Building
+
 * Install [Node.js](http://nodejs.org)
 * Open command window and navigate to local repo
 * Run `npm install`
 * Run `node make.js build`
+
+
+## License
+
+Copyright (c) 2016 Brian Waplington
+
+Copyright (c) 2016 BW Soft, Inc.
+
+[MIT License](https://raw.githubusercontent.com/bwsoftinc/TFS2017-TFS2015-build-agent-tasks-backport/master/LICENSE)
