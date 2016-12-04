@@ -14,6 +14,7 @@ Target maching running SSH server that accepts username/password combo.
 ## Options
 
 |**Option**|**Description**|
+|----------|---------------|
 |SSH endpoint|The hostname or ip address of the remote machine|
 |SSH username|The username credential for connecting to the remote machine|
 |SSH password|The password credential for connecting to the remote machine|
