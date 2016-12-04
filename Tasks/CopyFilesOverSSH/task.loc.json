@@ -1,5 +1,5 @@
 {
-  "id": "67cec91b-0351-4c2f-8465-d74b3d2a2d96",
+  "id": "deadbeef-adf0-49d8-a02d-11a4f22106aa",
   "name": "CopyFilesOverSSH",
   "friendlyName": "ms-resource:loc.friendlyName",
   "description": "ms-resource:loc.description",
@@ -13,7 +13,7 @@
     "Agent",
     "MachineGroup"
   ],
-  "author": "Microsoft Corporation",
+  "author": "BW Soft, Inc.",
   "version": {
     "Major": 0,
     "Minor": 1,
@@ -31,11 +31,35 @@
   "inputs": [
     {
       "name": "sshEndpoint",
-      "type": "connectedService:ssh",
+      "type": "string",
       "label": "ms-resource:loc.input.label.sshEndpoint",
       "defaultValue": "",
       "required": true,
       "helpMarkDown": "ms-resource:loc.input.help.sshEndpoint"
+    },
+    {
+      "name": "sshUsername",
+      "type": "string",
+      "label": "ms-resource:loc.input.label.sshUsername",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "ms-resource:loc.input.help.sshUsername"
+    },
+    {
+      "name": "sshPassword",
+      "type": "string",
+      "label": "ms-resource:loc.input.label.sshPassword",
+      "defaultValue": "",
+      "required": true,
+      "helpMarkDown": "ms-resource:loc.input.help.sshPassword"
+    },
+    {
+      "name": "sshPort",
+      "type": "string",
+      "label": "ms-resource:loc.input.label.sshPort",
+      "defaultValue": "22",
+      "required": true,
+      "helpMarkDown": "ms-resource:loc.input.help.sshPort"
     },
     {
       "name": "sourceFolder",

@@ -37,6 +37,7 @@
     "mocha": "2.3.3",
     "q": "1.4.1",
     "semver": "4.3.3",
+    "tfx-cli": "^0.3.40",
     "shelljs": "^0.3.0",
     "sync-request": "3.0.1",
     "typescript": "1.8.7",

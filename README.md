@@ -9,14 +9,13 @@ Further objective is to build and package these ported build agent tasks as easy
 ## Identified useful agent tasks absent from TFS 2015 release
 
 * CopyFilesOverSSH
-* FTPUpload
-* SSH
+* FTPUpload (in development)
+* SSH (in development)
 
 ## Building
 
 * Install [Node.js](http://nodejs.org)
 * Open command window and navigate to local repo
-* Run `npm install`
 * Run `node make.js build`
 
 

@@ -1,3 +1,6 @@
+console.log('> setting up build environment');
+require('child_process').execSync('npm install', { stdio: 'inherit' });
+
 // parse command line options
 var minimist = require('minimist');
 var mopts = {
@@ -49,8 +52,8 @@ var createTaskLocJson = util.createTaskLocJson;
 var validateTask = util.validateTask;
 
 // global paths
-var buildPath = path.join(__dirname, '_build', 'Tasks');
-var commonPath = path.join(__dirname, '_build', 'Tasks', 'Common');
+var buildPath = path.join(__dirname, '_build');
+var commonPath = path.join(__dirname, '_build', 'Common');
 var packagePath = path.join(__dirname, '_package');
 
 // node min version
@@ -223,6 +226,9 @@ target.build = function() {
         console.log();
         console.log('> copying task resources');
         copyTaskResources(taskMake, taskPath, outDir);
+        cp(path.join(__dirname, 'docs', taskDef.name + '.md'), outDir + '/overview.md');
+
+
     });
 
     banner('Build successful', true);
@@ -231,91 +237,30 @@ target.build = function() {
 target.package = function() {
     // clean
     rm('-Rf', packagePath);
+    target.build();
 
-    // create the non-aggregated layout
-    util.createNonAggregatedZip(buildPath, packagePath);
+    var outdir
+    taskList.forEach(function (taskName) {
+        banner('Packaging: ' + taskName);
 
-    // create the aggregated tasks layout
-    util.createAggregatedZip(packagePath);
+        var taskPath = path.join(__dirname, 'Tasks', taskName);
+        ensureExists(taskPath);
 
-    // nuspec
-    var version = options.version;
-    if (!version) {
-        console.warn('Skipping nupkg creation. Supply version with --version.');
-        return;
-    }
+        // load the task.json
+        var buildDir, packageDir;
+        var taskJsonPath = path.join(taskPath, 'task.json');
+        if (test('-f', taskJsonPath)) {
+            var taskDef = require(taskJsonPath);
+            validateTask(taskDef);
+            
+            buildDir = path.join(buildPath, taskDef.name);
+            packageDir = path.join(packagePath, taskDef.name);
+            mkdir('-p', packageDir);
+            cd(buildDir);
+            run('tfx extension create --output-path "'+packageDir+'"');
 
-    if (!semver.valid(version)) {
-        fail('invalid semver version: ' + version);
-    }
-
-    var pkgName = 'Mseng.MS.TF.Build.Tasks';
-    console.log();
-    console.log('> Generating .nuspec file');
-    var contents = '<?xml version="1.0" encoding="utf-8"?>' + os.EOL;
-    contents += '<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">' + os.EOL;
-    contents += '   <metadata>' + os.EOL;
-    contents += '      <id>' + pkgName + '</id>' + os.EOL;
-    contents += '      <version>' + version + '</version>' + os.EOL;
-    contents += '      <authors>bigbldt</authors>' + os.EOL;
-    contents += '      <owners>bigbldt,Microsoft</owners>' + os.EOL;
-    contents += '      <requireLicenseAcceptance>false</requireLicenseAcceptance>' + os.EOL;
-    contents += '      <description>For VSS internal use only</description>' + os.EOL;
-    contents += '      <tags>VSSInternal</tags>' + os.EOL;
-    contents += '   </metadata>' + os.EOL;
-    contents += '</package>' + os.EOL;
-    var nuspecPath = path.join(packagePath, 'pack-source', pkgName + '.nuspec');
-    fs.writeFileSync(nuspecPath, contents);
-
-    // package
-    ensureTool('nuget.exe');
-    var nupkgPath = path.join(packagePath, 'pack-target', `${pkgName}.${version}.nupkg`);
-    mkdir('-p', path.dirname(nupkgPath));
-    run(`nuget.exe pack ${nuspecPath} -OutputDirectory ${path.dirname(nupkgPath)}`);
-}
-
-// used by CI that does official publish
-target.publish = function() {
-    var server = options.server;
-    assert(server, 'server');
-
-    // get the branch/commit info
-    var refs = util.getRefs();
-
-    // test whether to publish the non-aggregated tasks zip
-    // skip if not the tip of a release branch
-    var release = refs.head.release;
-    var commit = refs.head.commit;
-    if (!release ||
-        !refs.releases[release] ||
-        commit != refs.releases[release].commit) {
-
-        // warn not publishing the non-aggregated
-        console.log(`##vso[task.logissue type=warning]Skipping publish for non-aggregated tasks zip. HEAD is not the tip of a release branch.`);
-    }
-    else {
-        // store the non-aggregated tasks zip
-        var nonAggregatedZipPath = path.join(packagePath, 'non-aggregated-tasks.zip');
-        util.storeNonAggregatedZip(nonAggregatedZipPath, release, commit);
-    }
-
-    // resolve the nupkg path
-    var nupkgFile;
-    var nupkgDir = path.join(packagePath, 'pack-target');
-    if (!test('-d', nupkgDir)) {
-        fail('nupkg directory does not exist');
-    }
-
-    var fileNames = fs.readdirSync(nupkgDir);
-    if (fileNames.length != 1) {
-        fail('Expected exactly one file under ' + nupkgDir);
-    }
-
-    nupkgFile = path.join(nupkgDir, fileNames[0]);
-
-    // publish the package
-    ensureTool('nuget3.exe');
-    run(`nuget3.exe push ${nupkgFile} -Source ${server} -apikey Skyrise`);
+        }
+    });
 }
 
 // used to bump the patch version in task.json files
