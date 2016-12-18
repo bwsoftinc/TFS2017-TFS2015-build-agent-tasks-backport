@@ -4,7 +4,7 @@ For on-premises TFS environments, there are a number of OSS build tasks for the 
 
 Due to some limitations in the TFS2015 environment not all agent build tasks are compatible if built straight from the repo.  This project aims to address the compatibility issues with work-arounds and backport some useful tasks to work with TFS 2015 on-premesis installations.  
 
-Further objective is to build and package these ported build agent tasks as easy to install visx extensions for TFS and distribute on the tfs marketplace.
+Further objective is to build and package these ported build agent tasks as easy to install vsix extensions for TFS and distribute on the tfs marketplace.
 
 ## Identified useful agent tasks absent from TFS 2015 release
 
